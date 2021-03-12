@@ -28,10 +28,14 @@ Settings:
 
 var conf = struct {
 	Port int
-	Dir  string
+	Server
 }{
-	Port: 0,
-	Dir:  ".",
+	Server: Server{Dir: "."},
+}
+
+type Server struct {
+	Dir  string
+	Cors bool
 }
 
 var logger = log.New(os.Stderr, "", 0)
@@ -39,6 +43,7 @@ var logger = log.New(os.Stderr, "", 0)
 func main() {
 	flag.IntVar(&conf.Port, "p", conf.Port, "port")
 	flag.StringVar(&conf.Dir, "d", conf.Dir, "dir")
+	flag.BoolVar(&conf.Cors, "c", conf.Cors, "cors")
 
 	flag.Usage = func() {
 		fmt.Fprint(flag.CommandLine.Output(), help)
@@ -49,7 +54,6 @@ func main() {
 	args()
 
 	crit(serve())
-
 }
 
 func serve() error {
@@ -60,10 +64,9 @@ func serve() error {
 	}
 
 	port := listener.Addr().(*net.TCPAddr).Port
-	dir := conf.Dir
-	server := &http.Server{Handler: srv.FileServer(dir)}
+	server := &http.Server{Handler: conf.Server}
 
-	logger.Printf("[srv] serving %q on %v\n", dir, fmt.Sprintf("http://localhost:%v", port))
+	logger.Printf("[srv] serving %q on %v\n", conf.Dir, fmt.Sprintf("http://localhost:%v", port))
 	return server.Serve(listener)
 }
 
@@ -86,4 +89,18 @@ func crit(err error) {
 		fmt.Fprintf(flag.CommandLine.Output(), "%+v\n", err)
 		os.Exit(1)
 	}
+}
+
+func (self Server) ServeHTTP(rew http.ResponseWriter, req *http.Request) {
+	if self.Cors {
+		allowCors(rew.Header())
+	}
+	srv.FileServer(self.Dir).ServeHTTP(rew, req)
+}
+
+func allowCors(header http.Header) {
+	header.Add("access-control-allow-credentials", "true")
+	header.Add("access-control-allow-headers", "content-type")
+	header.Add("access-control-allow-methods", "OPTIONS, GET, HEAD, POST, PUT, PATCH, DELETE")
+	header.Add("access-control-allow-origin", "*")
 }
