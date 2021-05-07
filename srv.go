@@ -32,10 +32,12 @@ would probably be addressed.
 */
 func (self FileServer) ServeHTTP(rew http.ResponseWriter, req *http.Request) {
 	switch req.Method {
-	case http.MethodGet, http.MethodHead, http.MethodOptions:
 	default:
 		http.Error(rew, "", http.StatusMethodNotAllowed)
 		return
+	case http.MethodHead, http.MethodOptions:
+		return
+	case http.MethodGet:
 	}
 
 	dir := string(self)

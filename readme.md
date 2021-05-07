@@ -19,13 +19,26 @@ http.ListenAndServe(":<some-port>", srv.FileServer("."))
 For CLI usage, first install Go: https://golang.org. Then run this:
 
 ```sh
-go get -u github.com/mitranim/srv/srv
+go install github.com/mitranim/srv/srv@latest
 
 # Get help
 srv -h
 
 # Actually run
 srv
+```
+
+This will compile the executable into `$GOPATH/bin/srv`. Make sure `$GOPATH/bin` is in your `$PATH` so the shell can discover the `srv` command. For example, my `~/.profile` contains this:
+
+```sh
+export GOPATH=~/go
+export PATH=$PATH:$GOPATH/bin
+```
+
+Alternatively, you can run the executable using the full path. At the time of writing, `~/go` is the default `$GOPATH` for Go installations. Some systems may have a different one.
+
+```sh
+~/go/bin/srv
 ```
 
 ## File Resolution
