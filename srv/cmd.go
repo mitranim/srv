@@ -21,6 +21,7 @@ Usage:
 	srv
 	srv -d <dir>
 	srv -p <port>
+	srv -h <host>
 
 Settings:
 
@@ -28,8 +29,10 @@ Settings:
 
 var conf = struct {
 	Port int
+	Host string
 	Server
 }{
+	Host:   "localhost",
 	Server: Server{Dir: "."},
 }
 
@@ -41,8 +44,9 @@ type Server struct {
 var logger = log.New(os.Stderr, "", 0)
 
 func main() {
-	flag.IntVar(&conf.Port, "p", conf.Port, "port")
 	flag.StringVar(&conf.Dir, "d", conf.Dir, "dir")
+	flag.IntVar(&conf.Port, "p", conf.Port, "port")
+	flag.StringVar(&conf.Host, "h", conf.Host, "host")
 	flag.BoolVar(&conf.Cors, "c", conf.Cors, "cors")
 
 	flag.Usage = func() {
@@ -58,7 +62,7 @@ func main() {
 
 func serve() error {
 	// This allows us to find the OS-provided port.
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%v", conf.Port))
+	listener, err := net.Listen("tcp", fmt.Sprintf("%v:%v", conf.Host, conf.Port))
 	if err != nil {
 		return err
 	}
@@ -66,7 +70,7 @@ func serve() error {
 	port := listener.Addr().(*net.TCPAddr).Port
 	server := &http.Server{Handler: conf.Server}
 
-	logger.Printf("[srv] serving %q on %v\n", conf.Dir, fmt.Sprintf("http://localhost:%v", port))
+	logger.Printf("[srv] serving %q on %v\n", conf.Dir, fmt.Sprintf("http://%v:%v", conf.Host, port))
 	return server.Serve(listener)
 }
 
